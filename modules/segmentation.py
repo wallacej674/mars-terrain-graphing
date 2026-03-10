@@ -3,7 +3,7 @@ from scipy.cluster.vq import kmeans2
 from scipy.ndimage import label
 
 
-def stack_features(features, valid_mask=None):
+def stack_features(features, valid_mask=None, normalize=True):
     """
     Convert feature rasters into a 2D matrix for clustering.
 
@@ -34,7 +34,14 @@ def stack_features(features, valid_mask=None):
     for name in names:
         valid_mask = valid_mask & np.isfinite(features[name])
 
-    X = np.column_stack([features[name][valid_mask] for name in names])
+    X = np.column_stack([features[name][valid_mask] for name in names]).astype(np.float32)
+
+    if normalize:
+        mu = np.mean(X, axis=0)
+        sigma = np.std(X, axis=0)
+        sigma[sigma == 0.0] = 1.0
+        X = (X - mu) / sigma
+
     return X, valid_mask, names
 
 
@@ -105,7 +112,14 @@ def connected_regions(cluster_map, min_region_size=100, connectivity=1):
     return regions
 
 
-def segment_terrain(features, valid_mask=None, n_clusters=6, min_region_size=100, seed=42):
+def segment_terrain(
+    features,
+    valid_mask=None,
+    n_clusters=6,
+    min_region_size=100,
+    seed=42,
+    normalize=True,
+):
     """
     End-to-end terrain segmentation: features -> clusters -> connected regions.
 
@@ -113,7 +127,7 @@ def segment_terrain(features, valid_mask=None, n_clusters=6, min_region_size=100
         tuple[np.ndarray, np.ndarray, list[str]]:
             cluster_map, region_ids, feature_names
     """
-    X, mask, names = stack_features(features, valid_mask=valid_mask)
+    X, mask, names = stack_features(features, valid_mask=valid_mask, normalize=normalize)
     shape = next(iter(features.values())).shape
     cluster_map = kmeans_segment(X, mask, shape, n_clusters=n_clusters, seed=seed)
     region_ids = connected_regions(cluster_map, min_region_size=min_region_size)

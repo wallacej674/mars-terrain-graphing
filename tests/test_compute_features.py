@@ -52,6 +52,12 @@ class TestComputeFeatures(unittest.TestCase):
         with self.assertRaises(ValueError):
             compute_roughness(elevation, window_size=1)
 
+    def test_slope_uses_anisotropic_pixel_spacing(self):
+        elevation = np.tile(np.arange(5, dtype=np.float32).reshape(-1, 1), (1, 5))
+        slope_iso = compute_slope(elevation, pixel_size=1.0, pixel_size_y=1.0)
+        slope_aniso = compute_slope(elevation, pixel_size=1.0, pixel_size_y=2.0)
+        self.assertTrue(np.nanmean(slope_aniso) < np.nanmean(slope_iso))
+
 
 if __name__ == "__main__":
     unittest.main()

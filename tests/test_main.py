@@ -8,6 +8,7 @@ import numpy as np
 
 class _Transform:
     a = 20.0
+    e = -20.0
 
 
 class TestMainScript(unittest.TestCase):

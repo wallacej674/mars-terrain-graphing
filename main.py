@@ -33,13 +33,14 @@ from modules.path_planner import build_region_graph, astar_path_regions, path_co
 
 # Load elevation and metadata
 elevation, profile, transform = load_dtm_tile(TILE_PATH)
-pixel_size = abs(transform.a)
+pixel_size_x = abs(transform.a)
+pixel_size_y = abs(transform.e)
 tile_id = os.path.splitext(os.path.basename(TILE_PATH))[0]
 
 # Compute topographic features
-slope = compute_slope(elevation, pixel_size)
-aspect = compute_aspect(elevation, pixel_size)
-curvature = compute_curvature(elevation, pixel_size)
+slope = compute_slope(elevation, pixel_size_x, pixel_size_y)
+aspect = compute_aspect(elevation, pixel_size_x, pixel_size_y)
+curvature = compute_curvature(elevation, pixel_size_x, pixel_size_y)
 roughness = compute_roughness(elevation, window_size=5)
 
 # Save feature rasters

@@ -34,6 +34,13 @@ class TestSegmentation(unittest.TestCase):
         self.assertFalse(out_mask[0, 1])  # removed due to NaN in a
         self.assertFalse(out_mask[1, 0])  # removed due to explicit valid_mask=False
 
+    def test_stack_features_normalizes_by_default(self):
+        a = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+        b = np.array([[10.0, 10.0], [20.0, 20.0]], dtype=np.float32)
+        X, _, _ = stack_features({"a": a, "b": b})
+        self.assertTrue(np.allclose(np.mean(X, axis=0), 0.0, atol=1e-6))
+        self.assertTrue(np.allclose(np.std(X, axis=0), 1.0, atol=1e-6))
+
     def test_kmeans_segment_validates_inputs(self):
         with self.assertRaises(ValueError):
             kmeans_segment(np.array([]), np.ones((1, 1), dtype=bool), (1, 1), n_clusters=2)
