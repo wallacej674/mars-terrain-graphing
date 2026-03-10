@@ -20,12 +20,13 @@ The long-term target is a knowledge-graph-ready terrain representation that can 
 
 1. Load one GeoTIFF DTM tile.
 2. Compute feature rasters:
-   - Slope
-   - Aspect
-   - Curvature
+   - Slope (uses `dx`/`dy` pixel spacing from the raster transform)
+   - Aspect (uses `dx`/`dy` pixel spacing from the raster transform)
+   - Curvature (uses `dx`/`dy` pixel spacing from the raster transform)
    - Roughness
 3. Segment terrain:
-   - K-means clustering in feature space (`slope`, `curvature`, `roughness`)
+   - Z-score normalization of feature matrix
+   - K-means clustering in normalized feature space (`slope`, `curvature`, `roughness`)
    - Connected-component split into contiguous `region_id`s
 4. Compute per-region attributes:
    - Area
@@ -97,8 +98,10 @@ flowchart TD
   - Loads DTM raster, profile, and affine transform.
 - `modules/compute_features.py`
   - Computes slope, aspect, curvature, roughness.
+  - Uses anisotropic pixel spacing (`dx`, `dy`) for gradient-based derivatives.
 - `modules/segmentation.py`
   - Converts feature rasters to a clustering matrix.
+  - Applies z-score normalization before clustering (default behavior).
   - Runs k-means.
   - Produces contiguous region IDs with connected components.
 - `modules/region_stats.py`
@@ -160,6 +163,16 @@ Edit `config.py`:
 python main.py
 ```
 
+## Testing
+
+Run all tests:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Current test suite covers feature extraction, segmentation, region attributes, graph export, path planning, IO helpers, config checks, and script orchestration (with mocks for external dependencies).
+
 ## Outputs
 
 Artifacts written to `output/`:
@@ -199,7 +212,7 @@ This produces a navigability graph suitable for shortest-path methods and later 
 1. Add batch processing over all DEM tiles.
 2. Improve nodata/mask propagation across all derivatives.
 3. Vectorize roughness for speed.
-4. Refine segmentation with feature scaling and post-processing.
+4. Refine segmentation post-processing (merge/tidy small fragments, shape regularization).
 5. Add crater-aware labeling and better landform rules.
 6. Add Neo4j ingestion script (nodes/edges bulk load).
 7. Demonstrate start-goal routing over multiple connected tiles.

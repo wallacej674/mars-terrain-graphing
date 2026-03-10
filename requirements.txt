@@ -3,3 +3,4 @@ scipy
 numpy
 matplotlib
 networkx
+boto3
