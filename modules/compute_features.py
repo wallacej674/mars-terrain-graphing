@@ -52,3 +52,30 @@ def compute_curvature(elevation, pixel_size):
 
     curvature = d2zdx2 + d2zdy2
     return curvature
+
+
+def compute_roughness(elevation, window_size=5):
+    """
+    Compute local roughness as moving-window elevation std-dev.
+
+    Args:
+        elevation (np.ndarray): 2D elevation array.
+        window_size (int): Odd moving-window size.
+
+    Returns:
+        np.ndarray: roughness raster in elevation units.
+    """
+    if window_size < 3 or window_size % 2 == 0:
+        raise ValueError("window_size must be an odd integer >= 3")
+
+    pad = window_size // 2
+    arr = np.asarray(elevation, dtype=np.float32)
+    padded = np.pad(arr, pad_width=pad, mode="reflect")
+    out = np.zeros_like(arr, dtype=np.float32)
+
+    for r in range(arr.shape[0]):
+        for c in range(arr.shape[1]):
+            window = padded[r : r + window_size, c : c + window_size]
+            out[r, c] = np.nanstd(window)
+
+    return out
